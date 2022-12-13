@@ -1,45 +1,33 @@
 import { Injectable } from '@nestjs/common';
+import { InjectModel } from '@nestjs/sequelize';
 import { Livro } from './livro.model';
 
 @Injectable()
 export class LivrosService {
-  livros: Livro[] = [];
-  obterTodos(): Livro[] {
-    return this.livros;
+  constructor(
+    @InjectModel(Livro)
+    private livroModel: typeof Livro,
+  ) {}
+  async obterTodos(): Promise<Livro[]> {
+    return this.livroModel.findAll();
   }
-  obterUm(id: string): Livro {
-    let index = this.livros.findIndex((obj) => obj.codigo == id);
-    if (index !== -1) {
-      console.log(this.livros[index]);
-      return this.livros[index];
-    } else {
-      throw 'error';
-    }
+  async obterUm(id: string): Promise<Livro> {
+    return this.livroModel.findByPk(id);
   }
-  criar(livro: Livro): string {
-    this.livros.push(livro);
+  async criar(livro: Livro): Promise<string> {
+    this.livroModel.create(livro);
     return 'Livro criado com sucesso';
   }
-  alterar(livro: Livro): { message: string; livro: Livro } {
-    let index = this.livros.findIndex((obj) => obj.codigo == livro.codigo);
-    if (index !== -1) {
-      console.log(this.livros[index]);
-      return {
-        message: 'Livro alterado com sucesso',
-        livro: this.livros[index],
-      };
-    } else {
-      throw 'error';
-    }
+  async alterar(livro: Livro): Promise<[number]> {
+    return this.livroModel.update(livro, {
+      where: {
+        id: livro.id,
+      },
+    });
   }
-  apagar(id: string): string {
-    let index = this.livros.findIndex((obj) => obj.codigo == id);
-    if (index !== -1) {
-      console.log(this.livros[index]);
-      this.livros[index];
-      return `Livro ${id} alterado com sucesso`;
-    } else {
-      throw 'error';
-    }
+  async apagar(id: string): Promise<string> {
+    const livro: Livro = await this.obterUm(id);
+    livro.destroy();
+    return 'Livro apagado com sucesso';
   }
 }
